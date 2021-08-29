@@ -1,3 +1,3 @@
 variable "users" {
-    default = ["Jon", "David", "Chris"]
+  default = ["Jon", "David", "Chris"]
 }
