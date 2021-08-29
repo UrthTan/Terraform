@@ -11,6 +11,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
+# S3 Bucket
 resource "aws_s3_bucket" "my_s3_bucket" {
   bucket = "my-s3-bucket-urth-henry-001"
   versioning {
@@ -18,14 +19,36 @@ resource "aws_s3_bucket" "my_s3_bucket" {
   }
 }
 
+# 3 IAM Users
 resource "aws_iam_user" "my_iam_user" {
   for_each = toset(var.users)
   name     = each.value
 }
 
+# default_vpc > terraform will not destroy or create aws_default_vpc but instead adopt
+resource "aws_default_vpc" "default" {
+
+}
+
+# Get subnet
+data "aws_subnet_ids" "default_subnets" {
+  vpc_id = aws_default_vpc.default.id
+}
+
+# Get ami, expect only 1 result
+data "aws_ami" "aws_linux_2_latest" {
+  owners      = ["amazon"]
+  most_recent = true
+  filter { # filter down
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+}
+
+# Security Group
 resource "aws_security_group" "http_server_security_group" {
   name   = "http_server_security_group"
-  vpc_id = "vpc-680b7515"
+  vpc_id = aws_default_vpc.default.id
   ingress {
     from_port   = 80
     to_port     = 80
@@ -46,5 +69,26 @@ resource "aws_security_group" "http_server_security_group" {
   }
   tags = {
     name = "http_server_security_group"
+  }
+}
+
+resource "aws_instance" "http_server" {
+  ami                    = data.aws_ami.aws_linux_2_latest.id
+  key_name               = "default-ec2"
+  instance_type          = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.http_server_security_group.id]
+  subnet_id              = tolist(data.aws_subnet_ids.default_subnets.ids)[4]
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user" # by default
+    private_key = file(var.aws_key_pair)
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum install httpd -y",                                                                                    # install httpd
+      "sudo service httpd start",                                                                                     # start
+      "echo Provisioned with Terraform - Virtual Server is at ${self.public_dns} | sudo tee /var/www/html/index.html" # copy a file
+    ]
   }
 }
