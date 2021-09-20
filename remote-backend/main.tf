@@ -12,10 +12,31 @@ provider "aws" {
 }
 
 # S3 Bucket
-resource "aws_s3_bucket" "my_s3_bucket" {
-  bucket = "my-s3-bucket-urth-henry-001"
+resource "aws_s3_bucket" "backend_state" {
+  bucket = "dev-backend-state-s3-bucket-urth-001"
   versioning {
     enabled = true
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+}
+
+# Locking - Dynamo DB
+resource "aws_dynamodb_table" "backend_loc" {
+  name = "dev_application_lock"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key = "LockID"
+  attribute {
+    name = "LockID"
+    type = "S"
   }
 }
 
