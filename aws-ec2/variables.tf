@@ -17,8 +17,3 @@ variable "business_divsion" {
   type        = string
   default     = "SAP"
 }
-
-# Key Pair
-variable "aws_key_pair" {
-  default = "~/Desktop/personal-files/default-ec2.pem"
-}
