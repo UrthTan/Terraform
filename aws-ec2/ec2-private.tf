@@ -6,15 +6,15 @@ module "ec2_private" {
     module.vpc
   ]
   source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "3.1.0"
+  version = "2.21.0"
 
-  for_each               = module.vpc.private_subnets
-  name                   = "${var.environment}-private-vm-${count.index}"
+  for_each               = toset(var.vpc_private_subnets)
+  name                   = "${var.environment}-private-vm-${index(var.vpc_private_subnets, each.value) + 1}"
   ami                    = data.aws_ami.amzlinux2.id
   instance_type          = var.instance_type
   key_name               = var.aws_key_pair_name
   user_data              = file("${path.module}/app-install.sh")
-  vpc_security_group_ids = module.private_sg.security_group_id
+  vpc_security_group_ids = [module.private_sg.security_group_id]
   tags                   = local.common_tags
   subnet_id              = each.value
 }
