@@ -9,7 +9,7 @@ module "loadbalancer_sg" {
   vpc_id      = module.vpc.vpc_id
   # Ingress Rules & CIDR Block  
   # List of ingress rules to create by name
-  ingress_rules = ["http-80-tcp"]
+  ingress_rules = ["http-80-tcp", "https-443-tcp"]
   # List of IPv4 CIDR ranges to use on all ingress rules
   ingress_cidr_blocks = ["0.0.0.0/0"]
   # List of egress rules to create by name

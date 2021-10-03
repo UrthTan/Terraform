@@ -1,7 +1,7 @@
 # AWS EC2 Instance Terraform Module
 # Bastion Host - EC2 Instance that will be created in VPC Public Subnet
 
-module "ec2_private" {
+module "ec2_private_app1" {
   depends_on = [
     module.vpc
   ]
@@ -9,11 +9,11 @@ module "ec2_private" {
   version = "2.21.0"
 
   instance_count = var.private_instance_count
-  name           = "${var.environment}-private-vm"
+  name           = "${var.environment}-app1"
   ami            = data.aws_ami.amzlinux2.id
   instance_type  = var.instance_type
   key_name       = var.aws_key_pair_name
-  user_data      = file("${path.module}/app-install.sh")
+  user_data      = file("${path.module}/app1-install.sh")
   subnet_ids = [
     module.vpc.private_subnets[0],
     module.vpc.private_subnets[1]

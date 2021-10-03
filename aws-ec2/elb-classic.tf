@@ -10,8 +10,8 @@ module "elb" {
   security_groups     = [module.loadbalancer_sg.security_group_id]
   number_of_instances = var.private_instance_count
   instances = [
-    module.ec2_private.id[0],
-    module.ec2_private.id[1]
+    module.ec2_private_app1.id[0],
+    module.ec2_private_app1.id[1]
   ]
   listener = [
     {
