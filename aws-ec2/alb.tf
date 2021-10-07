@@ -1,7 +1,7 @@
 # Terraform AWS Application Load Balancer (ALB)
 module "alb" {
   source  = "terraform-aws-modules/alb/aws"
-  version = "5.16.0"
+  version = "6.0.0"
 
   name               = "${local.name}-alb"
   load_balancer_type = "application"
@@ -108,9 +108,11 @@ module "alb" {
 
   # HTTPS Listener Rules
   https_listener_rules = [
-    # Rule-1: /app1* should go to App1 EC2 Instances
+    # Rule-1 Host-Headers: /app1* should go to App1 EC2 Instances
+    # Rule-1 Http-Headers: custom-header=my-app-1 should go to App1 EC2 Instances
     {
       https_listener_index = 0
+      priority             = 1
       actions = [
         {
           type               = "forward"
@@ -120,13 +122,21 @@ module "alb" {
       conditions = [
         {
           #path_patterns = ["/app1*"]
-          host_headers = [var.app1_dns_name]
+          #host_headers = [var.app1_dns_name]
+          http_headers = [
+            {
+              http_header_name = "custom-header"
+              values           = ["app-1", "app1", "my-app-1"]
+            }
+          ]
         }
       ]
     },
-    # Rule-2: /app2* should go to App2 EC2 Instances  
+    # Rule-2 Host-Headers: /app2* should go to App2 EC2 Instances  
+    # Rule-2 Http-Headers: custom-header=my-app-2 should go to App2 EC2 Instances
     {
       https_listener_index = 0
+      priority             = 2
       actions = [
         {
           type               = "forward"
@@ -136,7 +146,58 @@ module "alb" {
       conditions = [
         {
           #path_patterns = ["/app2*"]
-          host_headers = [var.app2_dns_name]
+          #host_headers = [var.app2_dns_name]
+          http_headers = [
+            {
+              http_header_name = "custom-header"
+              values           = ["app-2", "app2", "my-app-2"]
+            }
+          ]
+        }
+      ]
+    },
+    # Rule-3 When Query-String, website=aws-eks redirect to https://stacksimplify.com/aws-eks/
+    {
+      https_listener_index = 0
+      priority             = 3
+      actions = [
+        {
+          type        = "redirect"
+          status_code = "HTTP_302"
+          host        = "stacksimplify.com"
+          path        = "/aws-eks/"
+          query       = ""
+          protocol    = "HTTPS"
+        }
+      ]
+      conditions = [
+        {
+          query_strings = [
+            {
+              key   = "website"
+              value = "aws-eks"
+            }
+          ]
+        }
+      ]
+    },
+    # Rule-4: When Host Header = azure-aks.urthtan.com, redirect to https://stacksimplify.com/azure-aks/azure-kubernetes-service-introduction/
+    {
+      https_listener_index = 0
+      priority             = 4
+      actions = [
+        {
+          type        = "redirect"
+          status_code = "HTTP_302"
+          host        = "stacksimplify.com"
+          path        = "/azure-aks/azure-kubernetes-service-introduction/"
+          query       = ""
+          protocol    = "HTTPS"
+        }
+      ]
+      conditions = [
+        {
+          host_headers = [var.azure_dns_name]
         }
       ]
     }
